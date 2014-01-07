@@ -22,6 +22,7 @@
     NSString *followers;
     NSArray *timeline;
     UIImage *bann;
+    //NSArray *followinglistPro;
 }
 
 @property (weak, nonatomic) id <ProfileViewControllerDelegate> delegate;
@@ -51,6 +52,10 @@
 @property (nonatomic, retain) NSArray *timeline;
 
 @property (nonatomic, retain) UIImage *bann;
+
+@property (nonatomic, retain) NSDictionary *followerlistPro;
+
+@property (nonatomic, retain) NSDictionary *followinglistPro;
 
 @end
 

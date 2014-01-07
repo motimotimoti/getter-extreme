@@ -11,6 +11,7 @@
 #import "DetailViewController.h"
 #import "GTMOAuthAuthentication.h"
 #import "GTMOAuthViewControllerTouch.h"
+#import "FaFViewController.h"
 
 @interface ProfileViewController ()
 
@@ -22,6 +23,8 @@
     GTMOAuthAuthentication *auth_;
     // 表示中ツイート情報
     NSArray *timelineStatuses_;
+    
+    NSString * uwaa;
 }
 
 //@synthesize textView;
@@ -35,6 +38,8 @@
 @synthesize timeline;
 @synthesize tableView = _tableView;
 @synthesize bann;
+@synthesize followerlistPro;
+@synthesize followinglistPro;
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
@@ -69,7 +74,11 @@
     _tableView.delegate = self;
     _tableView.dataSource = self;
     [self.view addSubview:_tableView];
-    
+    /*
+    NSLog(@"start**************************************************************");
+    NSLog(@"%@",timeline);
+    NSLog(@"end****************************************************************");
+     */
 }
 
 
@@ -116,8 +125,19 @@
     //profileImage = [UIImage imageWithData:Tweetdata];
     
     //NSLog(@"%@ - %@", [status objectForKey:@"text"], [[status objectForKey:@"user"] objectForKey:@"screen_name"]);
-    
     return cell;
+}
+
+- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
+{
+    if ([[segue identifier] isEqualToString:@"follower"]) {
+        FaFViewController *fafViewController = (FaFViewController*)[segue destinationViewController];
+        NSLog(@"followerlistPro size = %d", [followerlistPro count]);
+        fafViewController.followerlistFaF = followerlistPro;
+    } else if([[segue identifier] isEqualToString:@"following"]){
+        FaFViewController *fafViewController = (FaFViewController*)[segue destinationViewController];
+        fafViewController.followinglistFaF = followinglistPro;
+    }
 }
 
 @end

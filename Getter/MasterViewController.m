@@ -10,6 +10,7 @@
 #import "DetailViewController.h"
 #import "TweetViewController.h"
 #import "ProfileViewController.h"
+#import "FaFViewController.h"
 
 @interface MasterViewController : UITableViewController <UIAlertViewDelegate, TweetViewControllerDelegate>
 {
@@ -18,6 +19,7 @@
 }
 @property (nonatomic, retain) UIImage *profileImage;
 @property (nonatomic, retain) UIImage *bannerImage;
+
 @end
 
 
@@ -31,9 +33,13 @@
     // 表示中ツイート情報
     NSArray *timelineStatuses_;
     NSArray *timelineStatuses2_;
+    NSDictionary *followerlist;
+    NSDictionary *followinglist;
     
     NSDictionary *user;
     NSDictionary *user2;
+    
+    //NSDictionary *next_cursor_data;
 }
 
 @synthesize profileImage;
@@ -150,6 +156,8 @@ static const int kMyAlertViewTagAuthenticationError = 1;
 {
     //[self fetchGetHomeTimeline];
     NSURL *url01 = [NSURL URLWithString:@"https://api.twitter.com/1.1/statuses/home_timeline.json"];
+    //NSURL *url01 = [NSURL URLWithString:@"https://userstream.twitter.com/1.1/user.json?with=user&with=follows"];
+    
     NSString *tl01 = @"tl01";
     [self fetchGetHomeTimeline:url01 timeLine:tl01];
 }
@@ -160,6 +168,7 @@ static const int kMyAlertViewTagAuthenticationError = 1;
     // 要求を準備
     //NSURL *url = [NSURL URLWithString:@"https://api.twitter.com/1.1/statuses/home_timeline.json"];
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
+
     [request setHTTPMethod:@"GET"];
     
     // 要求に署名情報を付加
@@ -174,8 +183,17 @@ static const int kMyAlertViewTagAuthenticationError = 1;
         GTMHTTPFetcher *fetcher = [GTMHTTPFetcher fetcherWithRequest:request];
         [fetcher beginFetchWithDelegate:self
                       didFinishSelector:@selector(homeTimelineFetcher02:finishedWithData:error:)];
+    } else if([tl  isEqual: @"tl03"]){
+        GTMHTTPFetcher *fetcher = [GTMHTTPFetcher fetcherWithRequest:request];
+        [fetcher beginFetchWithDelegate:self
+                      didFinishSelector:@selector(homeTimelineFetcher03:finishedWithData:error:)];
+    } else if([tl  isEqual: @"tl04"]){
+        GTMHTTPFetcher *fetcher = [GTMHTTPFetcher fetcherWithRequest:request];
+        [fetcher beginFetchWithDelegate:self
+                      didFinishSelector:@selector(homeTimelineFetcher04:finishedWithData:error:)];
     }
 }
+
 
 // タイムライン (home_timeline) 取得応答時
 - (void)homeTimelineFetcher:(GTMHTTPFetcher *)fetcher
@@ -191,6 +209,7 @@ static const int kMyAlertViewTagAuthenticationError = 1;
     // タイムライン取得成功
     // JSONデータをパース
     NSError *jsonError = nil;
+    
     NSArray *statuses = [NSJSONSerialization JSONObjectWithData:data
                                                         options:0
                                                           error:&jsonError];
@@ -235,6 +254,75 @@ error:(NSError *)error
         timelineStatuses2_ = statuses;
     }
 
+- (void)homeTimelineFetcher03:(GTMHTTPFetcher *)fetcher
+             finishedWithData:(NSData *)data
+                        error:(NSError *)error
+{
+    if (error != nil) {
+        // タイムライン取得時エラー
+        NSLog(@"Fetching status/home_timeline error: %d", error.code);
+        return;
+    }
+    
+    // タイムライン取得成功
+    // JSONデータをパース
+    NSError *jsonError = nil;
+    /*
+    NSArray *statuses = [NSJSONSerialization JSONObjectWithData:data
+                                                        options:0
+                                                          error:&jsonError];
+    */
+    NSDictionary *followerData = [NSJSONSerialization JSONObjectWithData:data
+                                                        options:0
+                                                          error:&jsonError];
+    
+    // JSONデータのパースエラー
+    if (followerData == nil) {
+        NSLog(@"JSON Parser error: %d", jsonError.code);
+        return;
+    }
+    
+    // データを保持
+    NSLog(@"statuses size = %d", [followerData count]);
+    //followerlist = statuses;
+    followerlist = followerData;
+
+    //next_cursor_data = [followerlist objectForKey:@"next_cursor"];
+
+}
+
+- (void)homeTimelineFetcher04:(GTMHTTPFetcher *)fetcher
+             finishedWithData:(NSData *)data
+                        error:(NSError *)error
+{
+    if (error != nil) {
+        // タイムライン取得時エラー
+        NSLog(@"Fetching status/home_timeline error: %d", error.code);
+        return;
+    }
+    
+    // タイムライン取得成功
+    // JSONデータをパース
+    NSError *jsonError = nil;
+    /*
+    NSArray *statuses = [NSJSONSerialization JSONObjectWithData:data
+                                                        options:0
+                                                          error:&jsonError];
+     */
+    NSDictionary *followingData = [NSJSONSerialization JSONObjectWithData:data
+                                                                 options:0
+                                                                   error:&jsonError];
+    
+    // JSONデータのパースエラー
+    if (followingData == nil) {
+        NSLog(@"JSON Parser error: %d", jsonError.code);
+        return;
+    }
+    
+    // データを保持
+    followinglist = followingData;
+}
+
 #pragma mark - Table View
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
@@ -263,11 +351,11 @@ error:(NSError *)error
     // ユーザ情報から screen_name を取り出して表示
     //NSDictionary *user = [status objectForKey:@"user"];
     user = [status objectForKey:@"user"];
+    cell.detailTextLabel.font = [UIFont systemFontOfSize:8];
     cell.detailTextLabel.text = [user objectForKey:@"screen_name"];
     NSURL *url = [NSURL URLWithString:[user objectForKey:@"profile_image_url"]];
     NSData *Tweetdata = [NSData dataWithContentsOfURL:url];
     cell.imageView.image = [UIImage imageWithData:Tweetdata];
-    
     NSLog(@"%@ - %@", [status objectForKey:@"text"], [[status objectForKey:@"user"] objectForKey:@"screen_name"]);
     
     return cell;
@@ -293,10 +381,6 @@ error:(NSError *)error
 {
     //特定した人のタイムラインだけを「NSDictionary *title」にいれる。
     NSDictionary *title = [timelineStatuses_ objectAtIndex:indexPath.row];
-    //titleの中身を表示
-    NSLog (@"start-----------------------------------------------------------------");
-    NSLog(@"%@",title);
-    NSLog (@"end-------------------------------------------------------------------");
     //titleから「user」の構造だけをぬきとる。
     user2 = [title objectForKey:@"user"];
     //プロフィール画像用。
@@ -313,6 +397,27 @@ error:(NSError *)error
     NSURL *url02 = [NSURL URLWithString:[str_cid stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding]];
     NSString *tl02 = @"tl02";
     [self fetchGetHomeTimeline:url02 timeLine:tl02];
+    
+    
+    /*
+    NSString *cursor;
+    if(next_cursor_data != NULL)
+    {
+        cursor = [NSString stringWithFormat:@"cursor=%@",next_cursor_data];
+    }
+    */
+    
+    NSString *scname_followerlist = [user2 objectForKey:@"screen_name"];
+    NSString *str_cid_followerlist = [NSString stringWithFormat:@"https://api.twitter.com/1.1/followers/list.json?screen_name=%@",scname_followerlist];
+    NSURL *url03 = [NSURL URLWithString:[str_cid_followerlist stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding]];
+    NSString *tl03 = @"tl03";
+    [self fetchGetHomeTimeline:url03 timeLine:tl03];
+    
+    NSString *scname_followinglist = [user2 objectForKey:@"screen_name"];
+    NSString *str_cid_followinglist = [NSString stringWithFormat:@"https://api.twitter.com/1.1/friends/list.json?screen_name=%@",scname_followinglist];
+    NSURL *url04 = [NSURL URLWithString:[str_cid_followinglist stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding]];
+    NSString *tl04 = @"tl04";
+    [self fetchGetHomeTimeline:url04 timeLine:tl04];
     
 }
 
@@ -378,6 +483,11 @@ error:(NSError *)error
         [profileViewController setBann:self.bannerImage];
         
         profileViewController.timeline =  timelineStatuses2_;
+
+        NSLog(@"master followerlist size = %d", [followerlist count]);
+        profileViewController.followerlistPro = followerlist;
+        
+        profileViewController.followinglistPro = followinglist;
     }
 }
 
